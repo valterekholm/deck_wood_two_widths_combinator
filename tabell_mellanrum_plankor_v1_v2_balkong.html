@@ -1,14 +1,49 @@
+<!DOCTYPE html>
 <html>
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
 <script>
 OPTI_GLIP = 3; // the desired "optimal" gap in mm, between boards, change this
+
+
+function insertNewDiv(className, beforeElm){
+	console.log("insertNewDiv " + className);
+	var nd = document.createElement("div");
+	nd.className = className;
+	document.body.insertBefore(nd, beforeElm);
+	return nd;
+}
+
+function writeToDiv(elm, txt, append){
+	if(append){
+		elm.innerHTML += txt;
+	}
+	else{
+		elm.innerHTML = txt;
+	}
+}
+
 </script>
 <style>
+input{
+	margin-left: 10px;
+}
+fieldset p{
+	display: inline-block;
+	margin-bottom: 5px;
+}
 .green{
 background:#5f5;
 }
 .orange{
 background:#f65;
+}
+.results{
+	border: 1px dotted gray;
+}
+.results:before{
+	content: "New results:"
 }
 </style>
 </head>
@@ -17,13 +52,19 @@ background:#f65;
 <p>Beräknad optimal glipa: 3 mm (mellan plankor)</p-->
 
 <h1>Calculation of slip with trall building on balcony, combination of timber1 and timber2 (V1, V2)</h1>
-<p>Calculated optimal slip:
-<script>
-document.write(OPTI_GLIP);
-</script>
- mm (between planks)</p>
+
+<fieldset>
+<p><label for="blk">Balcony depth:</label><input type="number" name="blk" id="blk" placeholder="a number above 0" value="1244"></p>
+<p><label for="optiG">Your optimal gap:</label><input type="number" name="optiG" id="optiG" placeholder="0 or above" value="3"></p>
+<p><label for="sbw">Smaller board width:</label><input type="number" name="sbw" id="sbw" placeholder="above 0" value="120"></p>
+<p><label for="wbw">Wider board width:</label><input type="number" name="wbw" id="wbw" placeholder="above 0 and equal or above 'Smaller board width'" value="145"></p>
+<button id="run">Calculate</button>
+</fieldset>
+
+<div id="results_ph" class="This is a placeholder"></div>
 
 <script>
+
 
 //Hello. To use this "app" you must know:
 V1 = 120;//Width in mm of first board type
@@ -33,13 +74,14 @@ BALKO = 1244;//mm the depth of the balkony, meaning the axis on which the boards
 //This "app" only deals with 2 dimensions of the flooring, the dimensions of the floor, not the thickness of the boards/planks.
 
 
-document.write("<h4>Balkony depth: " + BALKO + ", V1: "+V1+", V2: "+V2+"</h4>");//balkony width is not part of application
+document.write("<div id='example'><h4>Balkony depth: " + BALKO + ", V1: "+V1+", V2: "+V2+"</h4>");//balkony width is not part of application
+document.write("<p>Starting with optimal gap set to " + OPTI_GLIP + "</p>");
 
 var nrV2Max = Math.floor(BALKO / V2); // the maximal rows of boards just of type V2 that can be stacked on the balkony
 
 
 var closest=10000, lastClosest = -1;//leave these
-var closestAbove = 1000; lastClosestAbove = -1;//secure alternative recording, exceeding OPTI_GLIP
+var closestAbove = 1000, lastClosestAbove = -1;//secure alternative recording, exceeding OPTI_GLIP
 var bestGapDivided =0, bestGapSecureDivided =0;
 for(var v=0; v<=nrV2Max; v++){
 var hv2 = v*V2;
@@ -63,15 +105,15 @@ var classN = isAboveOpti ? "green" : "orange";
 document.write("<span class='"+classN+"'>Amount of V2: " + v + ", amount of V1: " + rest2 + ", tot.nr.o.boards: " + totAntalPlank + ", accumulated depth: " + totHojd + ", gap: "+ glipa + ", gap when divided: " + glipaFordelat + ", distance from optimal gap: " + distOpti + "</span><br>");
 
 if(distOpti < closest){
-	closest = distOpti;
-	lastClosest = v;
-	bestGapDivided = glipaFordelat;
+closest = distOpti;
+lastClosest = v;
+bestGapDivided = glipaFordelat;
 }
 
 if(distOpti < closestAbove && isAboveOpti){
-	closestAbove = distOpti;
-	lastClosestAbove = v;
-	bestGapSecureDivided = glipaFordelat;
+closestAbove = distOpti;
+lastClosestAbove = v;
+bestGapSecureDivided = glipaFordelat;
 }
 
 
@@ -79,6 +121,77 @@ if(distOpti < closestAbove && isAboveOpti){
 
 document.write("Closest alternative is 'Amount of V2: " + lastClosest + "' ... a gap of " + bestGapDivided + " mm<br>");
 document.write("Closest 'secure' alternative (exceeding OPTI_GLIP) is 'Amount of V2: " + lastClosestAbove + "' ... a gap of " + bestGapSecureDivided + " mm<br>");
+document.write("<div><button id='close_example'>Close example</button></div>");
+document.write("</div>");//end of example
+
+
+window.onload = function(){
+	var run = document.querySelector("#run");
+	var blk = document.querySelector("#blk");
+	var optiG = document.querySelector("#optiG");
+	var sbw = document.querySelector("#sbw");
+	var wbw = document.querySelector("#wbw");
+
+	run.addEventListener("click", function(){
+		var results = insertNewDiv("results", document.querySelector("#results_ph"));
+		var d = new Date();
+		var time = d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
+		
+		BALKO = blk.value;
+		OPTI_GLIP = optiG.value;
+		V1 = sbw.value;
+		V2 = wbw.value;
+		//document.write("<h1>Calculation of slip with trall building on balcony, combination of timber1 and timber2 (V1, V2)</h1>");
+		writeToDiv(results, "<p>("+time+") ||||| Declared optimal slip: " + OPTI_GLIP + " mm (between planks)</p>", false);
+		writeToDiv(results, "<h4>Balkony depth: " + BALKO + ", V1: "+V1+", V2: "+V2+"</h4>", true);
+		nrV2Max = Math.floor(BALKO / V2);
+		closest=10000; lastClosest = -1; closestAbove = 1000; lastClosestAbove = -1; bestGapDivided =0; bestGapSecureDivided =0;
+	
+		for(var v=0; v<=nrV2Max; v++){
+			var hv2 = v*V2;
+			var rest1 = BALKO-hv2;
+	
+			var rest2 = rest1 / V1;
+	
+			console.log(rest2);
+			rest2 = Math.floor(rest2);
+	
+			var totAntalPlank = v+rest2;
+
+
+			var totHojd = (V1*rest2) + (V2*v);
+			var glipa = BALKO-totHojd;
+			var glipaFordelat = glipa / (totAntalPlank-1);
+			var distOpti = Math.abs(glipaFordelat - OPTI_GLIP);
+			var isAboveOpti = glipaFordelat > OPTI_GLIP;
+			var classN = isAboveOpti ? "green" : "orange";
+
+			writeToDiv(results, "<span class='"+classN+"'>Amount of V2: " + v + ", amount of V1: " + rest2 + ", tot.nr.o.boards: " + totAntalPlank + ", accumulated depth: " + totHojd + ", gap: "+ glipa + ", gap when divided: " + glipaFordelat + ", distance from optimal gap: " + distOpti + "</span><br>", true);
+
+			if(distOpti < closest){
+				closest = distOpti;
+				lastClosest = v;
+				bestGapDivided = glipaFordelat;
+			}
+
+			if(distOpti < closestAbove && isAboveOpti){
+				closestAbove = distOpti;
+				lastClosestAbove = v;
+				bestGapSecureDivided = glipaFordelat;
+			}
+		}
+
+		writeToDiv(results, "Closest alternative is 'Amount of V2: " + lastClosest + "' ... a gap of " + bestGapDivided + " mm<br>", true);
+		writeToDiv(results, "Closest 'secure' alternative (exceeding OPTI_GLIP) is 'Amount of V2: " + lastClosestAbove + "' ... a gap of " + bestGapSecureDivided + " mm<br>", true);
+	});
+	
+	var close_example = document.querySelector("#close_example");
+	close_example.addEventListener("click", function(){
+		var exm = document.querySelector("#example");
+		exm.parentNode.removeChild(exm);
+	});
+}
+
 
 
 </script>
