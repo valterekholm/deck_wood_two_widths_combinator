@@ -1,0 +1,86 @@
+<html>
+<head>
+<script>
+OPTI_GLIP = 3; // the desired "optimal" gap in mm, between boards, change this
+</script>
+<style>
+.green{
+background:#5f5;
+}
+.orange{
+background:#f65;
+}
+</style>
+</head>
+<body>
+<!--h1>Uträkning av glipa med trallbygge på balkong (205 x 124 cm), komination av virke1 och virke2 (V1, V2)</h1>
+<p>Beräknad optimal glipa: 3 mm (mellan plankor)</p-->
+
+<h1>Calculation of slip with trall building on balcony, combination of timber1 and timber2 (V1, V2)</h1>
+<p>Calculated optimal slip:
+<script>
+document.write(OPTI_GLIP);
+</script>
+ mm (between planks)</p>
+
+<script>
+
+//Hello. To use this "app" you must know:
+V1 = 120;//Width in mm of first board type
+V2 = 145;//Width in mm of second board type
+BALKO = 1244;//mm the depth of the balkony, meaning the axis on which the boards are to be 'stacked', usually how much the balkony extends
+
+//This "app" only deals with 2 dimensions of the flooring, the dimensions of the floor, not the thickness of the boards/planks.
+
+
+document.write("<h4>Balkony depth: " + BALKO + ", V1: "+V1+", V2: "+V2+"</h4>");//balkony width is not part of application
+
+var nrV2Max = Math.floor(BALKO / V2); // the maximal rows of boards just of type V2 that can be stacked on the balkony
+
+
+var closest=10000, lastClosest = -1;//leave these
+var closestAbove = 1000; lastClosestAbove = -1;//secure alternative recording, exceeding OPTI_GLIP
+var bestGapDivided =0, bestGapSecureDivided =0;
+for(var v=0; v<=nrV2Max; v++){
+var hv2 = v*V2;
+var rest1 = BALKO-hv2;
+
+var rest2 = rest1 / V1;
+
+console.log(rest2);
+rest2 = Math.floor(rest2);
+
+var totAntalPlank = v+rest2;
+
+
+var totHojd = (V1*rest2) + (V2*v);
+var glipa = BALKO-totHojd;
+var glipaFordelat = glipa / (totAntalPlank-1);
+var distOpti = Math.abs(glipaFordelat - OPTI_GLIP);
+var isAboveOpti = glipaFordelat > OPTI_GLIP;
+var classN = isAboveOpti ? "green" : "orange";
+
+document.write("<span class='"+classN+"'>Amount of V2: " + v + ", amount of V1: " + rest2 + ", tot.nr.o.boards: " + totAntalPlank + ", accumulated depth: " + totHojd + ", gap: "+ glipa + ", gap when divided: " + glipaFordelat + ", distance from optimal gap: " + distOpti + "</span><br>");
+
+if(distOpti < closest){
+	closest = distOpti;
+	lastClosest = v;
+	bestGapDivided = glipaFordelat;
+}
+
+if(distOpti < closestAbove && isAboveOpti){
+	closestAbove = distOpti;
+	lastClosestAbove = v;
+	bestGapSecureDivided = glipaFordelat;
+}
+
+
+}
+
+document.write("Closest alternative is 'Amount of V2: " + lastClosest + "' ... a gap of " + bestGapDivided + " mm<br>");
+document.write("Closest 'secure' alternative (exceeding OPTI_GLIP) is 'Amount of V2: " + lastClosestAbove + "' ... a gap of " + bestGapSecureDivided + " mm<br>");
+
+
+</script>
+</body>
+</html>
