@@ -58,6 +58,7 @@ background:#f65;
 <p><label for="optiG">Your optimal gap:</label><input type="number" name="optiG" id="optiG" placeholder="0 or above" value="3"></p>
 <p><label for="sbw">Smaller board width:</label><input type="number" name="sbw" id="sbw" placeholder="above 0" value="120"></p>
 <p><label for="wbw">Wider board width:</label><input type="number" name="wbw" id="wbw" placeholder="above 0 and equal or above 'Smaller board width'" value="145"></p>
+<p><label for="wbw">Forced gap:</label><input type="number" name="fg" id="fg" placeholder="A bottom limit of gap" value="0"></p>
 <button id="run">Calculate</button>
 </fieldset>
 
@@ -71,14 +72,16 @@ V1 = 120;//Width in mm of first board type
 V2 = 145;//Width in mm of second board type
 BALKO = 1244;//mm the depth of the balkony, meaning the axis on which the boards are to be 'stacked', usually how much the balkony extends
 
+
+FORCED_GAP = 0; // a gap that is 'must'
 //This "app" only deals with 2 dimensions of the flooring, the dimensions of the floor, not the thickness of the boards/planks.
 
 
 document.write("<div id='example'><h4>Balkony depth: " + BALKO + ", V1: "+V1+", V2: "+V2+"</h4>");//balkony width is not part of application
 document.write("<p>Starting with optimal gap set to " + OPTI_GLIP + "</p>");
 
-var nrV2Max = Math.floor(BALKO / V2); // the maximal rows of boards just of type V2 that can be stacked on the balkony
-
+var nrV2Max = Math.floor(BALKO / (V2+FORCED_GAP)); // the maximal rows of boards just of type V2 that can be stacked on the balkony
+//alert("<p>nrV2Max: " + nrV2Max + " ("+BALKO+"/("+V2+"+"+FORCED_GAP	+"))</p>");
 
 var closest=10000, lastClosest = -1;//leave these
 var closestAbove = 1000, lastClosestAbove = -1;//secure alternative recording, exceeding OPTI_GLIP
@@ -87,7 +90,7 @@ for(var v=0; v<=nrV2Max; v++){
 var hv2 = v*V2;
 var rest1 = BALKO-hv2;
 
-var rest2 = rest1 / V1;
+var rest2 = rest1 / (V1+FORCED_GAP);
 
 console.log(rest2);
 rest2 = Math.floor(rest2);
@@ -131,30 +134,33 @@ window.onload = function(){
 	var optiG = document.querySelector("#optiG");
 	var sbw = document.querySelector("#sbw");
 	var wbw = document.querySelector("#wbw");
+	var fg = document.querySelector("#fg");
 
 	run.addEventListener("click", function(){
 		var results = insertNewDiv("results", document.querySelector("#results_ph"));
 		var d = new Date();
 		var time = d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
 		
-		BALKO = blk.value;
-		OPTI_GLIP = optiG.value;
-		V1 = sbw.value;
-		V2 = wbw.value;
+		BALKO = parseInt(blk.value);
+		OPTI_GLIP = parseInt(optiG.value);
+		V1 = parseInt(sbw.value);
+		V2 = parseInt(wbw.value);
+		FORCED_GAP = parseInt(fg.value);
 		//document.write("<h1>Calculation of slip with trall building on balcony, combination of timber1 and timber2 (V1, V2)</h1>");
-		writeToDiv(results, "<p>("+time+") ||||| Declared optimal slip: " + OPTI_GLIP + " mm (between planks)</p>", false);
+		writeToDiv(results, "<p>("+time+") ||||| Declared optimal slip: " + OPTI_GLIP + " mm (between planks), declared forced gap: " + FORCED_GAP + "</p>", false);
 		writeToDiv(results, "<h4>Balkony depth: " + BALKO + ", V1: "+V1+", V2: "+V2+"</h4>", true);
-		nrV2Max = Math.floor(BALKO / V2);
+		nrV2Max = Math.floor(BALKO / (V2+FORCED_GAP));//how many of the wider sort could fit
+		writeToDiv(results, "<p>nrV2Max: " + nrV2Max + " ("+BALKO+"/("+V2+"+"+FORCED_GAP	+"))</p>", true);
 		closest=10000; lastClosest = -1; closestAbove = 1000; lastClosestAbove = -1; bestGapDivided =0; bestGapSecureDivided =0;
 	
 		for(var v=0; v<=nrV2Max; v++){
-			var hv2 = v*V2;
-			var rest1 = BALKO-hv2;
+			var hv2 = v*(V2+FORCED_GAP);//thicker planks total 'height'
+			var rest1 = BALKO-hv2;//remaining for the thinner planks to fill
 	
-			var rest2 = rest1 / V1;
+			var rest2 = rest1 / (V1+FORCED_GAP);//amount of thinner planks
 	
 			console.log(rest2);
-			rest2 = Math.floor(rest2);
+			rest2 = Math.floor(rest2);//Amount of thinner plank, maximal
 	
 			var totAntalPlank = v+rest2;
 
